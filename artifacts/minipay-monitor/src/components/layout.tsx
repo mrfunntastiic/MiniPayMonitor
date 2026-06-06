@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 
 const DEPOSIT_ADDR = "0xCb205D7ca9840393f43941dDEAc6a7bF8deD4c5a";
-const REWARD_EU_US_ADDR = "0x65cc602e616ca786bdb4bab00a6272060f0082fb";
+const REWARD_EU_ADDR = "0x65cc602e616ca786bdb4bab00a6272060f0082fb";
+const REWARD_US_ADDR = "0x74667d9eDD871150cE38EBC26355758ba31F44B5";
 const REWARD_ASIA_ADDR = "0x22Bc6F7f356F69EE8103475Aa1A864a0D77fC3e6";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -104,9 +105,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </Link>
 
         <Link
-          href={`/wallet/${REWARD_EU_US_ADDR}`}
-          className={navLinkClass(`/wallet/${REWARD_EU_US_ADDR}`)}
-          style={navLinkStyle(`/wallet/${REWARD_EU_US_ADDR}`)}
+          href={`/wallet/${REWARD_EU_ADDR}`}
+          className={navLinkClass(`/wallet/${REWARD_EU_ADDR}`)}
+          style={navLinkStyle(`/wallet/${REWARD_EU_ADDR}`)}
           onClick={() => setMobileOpen(false)}
         >
           <WalletIcon className="h-4 w-4 mr-3 shrink-0" />
@@ -114,9 +115,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </Link>
 
         <Link
-          href={`/wallet/${REWARD_EU_US_ADDR}`}
-          className={navLinkClass(`/wallet/${REWARD_EU_US_ADDR}-us`)}
-          style={navLinkStyle(`/wallet/${REWARD_EU_US_ADDR}-us`)}
+          href={`/wallet/${REWARD_US_ADDR}`}
+          className={navLinkClass(`/wallet/${REWARD_US_ADDR}`)}
+          style={navLinkStyle(`/wallet/${REWARD_US_ADDR}`)}
           onClick={() => setMobileOpen(false)}
         >
           <WalletIcon className="h-4 w-4 mr-3 shrink-0" />

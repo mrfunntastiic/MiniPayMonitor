@@ -3,7 +3,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, ExternalLink } from "lucide-react";
 
 const DEPOSIT_ADDR = "0xCb205D7ca9840393f43941dDEAc6a7bF8deD4c5a";
-const REWARD_EU_US_ADDR = "0x65cc602e616ca786bdb4bab00a6272060f0082fb";
+const REWARD_EU_ADDR = "0x65cc602e616ca786bdb4bab00a6272060f0082fb";
+const REWARD_US_ADDR = "0x74667d9eDD871150cE38EBC26355758ba31F44B5";
 const REWARD_ASIA_ADDR = "0x22Bc6F7f356F69EE8103475Aa1A864a0D77fC3e6";
 
 type CardDef = {
@@ -26,10 +27,10 @@ const SECTIONS: { title: string; cards: CardDef[] }[] = [
   {
     title: "WALLET REWARD",
     cards: [
-      { id: "reward-eu-usdt",   label: "Saldo Reward", region: "Europe", token: "USDT", address: REWARD_EU_US_ADDR, accent: "#06b6d4" },
-      { id: "reward-eu-usdc",   label: "Saldo Reward", region: "Europe", token: "USDC", address: REWARD_EU_US_ADDR, accent: "#8b5cf6" },
-      { id: "reward-us-usdt",   label: "Saldo Reward", region: "US",     token: "USDT", address: REWARD_EU_US_ADDR, accent: "#f59e0b" },
-      { id: "reward-us-usdc",   label: "Saldo Reward", region: "US",     token: "USDC", address: REWARD_EU_US_ADDR, accent: "#f59e0b" },
+      { id: "reward-eu-usdt",   label: "Saldo Reward", region: "Europe", token: "USDT", address: REWARD_EU_ADDR,   accent: "#06b6d4" },
+      { id: "reward-eu-usdc",   label: "Saldo Reward", region: "Europe", token: "USDC", address: REWARD_EU_ADDR,   accent: "#8b5cf6" },
+      { id: "reward-us-usdt",   label: "Saldo Reward", region: "US",     token: "USDT", address: REWARD_US_ADDR,   accent: "#f59e0b" },
+      { id: "reward-us-usdc",   label: "Saldo Reward", region: "US",     token: "USDC", address: REWARD_US_ADDR,   accent: "#f59e0b" },
       { id: "reward-asia-usdt", label: "Saldo Reward", region: "Asia",   token: "USDT", address: REWARD_ASIA_ADDR,  accent: "#ec4899" },
       { id: "reward-asia-usdc", label: "Saldo Reward", region: "Asia",   token: "USDC", address: REWARD_ASIA_ADDR,  accent: "#ec4899" },
     ],

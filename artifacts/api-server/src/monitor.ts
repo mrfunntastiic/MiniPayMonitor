@@ -12,7 +12,8 @@ const LOW_BALANCE_ALERT_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour cooldown
 
 const MONITORED_WALLETS = [
   { address: "0xCb205D7ca9840393f43941dDEAc6a7bF8deD4c5a", label: "Deposit Global", group: "deposit" },
-  { address: "0x65cc602e616ca786bdb4bab00a6272060f0082fb", label: "Reward Europe / US", group: "reward-europe" },
+  { address: "0x65cc602e616ca786bdb4bab00a6272060f0082fb", label: "Reward Europe", group: "reward-europe" },
+  { address: "0x74667d9eDD871150cE38EBC26355758ba31F44B5", label: "Reward US", group: "reward-us" },
   { address: "0x22Bc6F7f356F69EE8103475Aa1A864a0D77fC3e6", label: "Reward Asia", group: "reward-asia" },
 ];
 
