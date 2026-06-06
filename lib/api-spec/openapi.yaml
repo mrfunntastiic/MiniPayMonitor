@@ -3,20 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: MiniPay Monitor API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: wallets
+    description: Wallet balance and info
+  - name: transactions
+    description: Transaction history
+  - name: alerts
+    description: Balance change alerts
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,122 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /wallets:
+    get:
+      operationId: getWallets
+      tags: [wallets]
+      summary: Get all monitored wallets with balances
+      responses:
+        "200":
+          description: List of wallets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Wallet"
+
+  /wallets/summary:
+    get:
+      operationId: getWalletsSummary
+      tags: [wallets]
+      summary: Summary of all wallet balances grouped by type
+      responses:
+        "200":
+          description: Wallet summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletSummary"
+
+  /wallets/{address}/balances:
+    get:
+      operationId: getWalletBalances
+      tags: [wallets]
+      summary: Get token balances for a specific wallet
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Token balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TokenBalance"
+
+  /transactions/{address}:
+    get:
+      operationId: getTransactions
+      tags: [transactions]
+      summary: Get recent transactions for a wallet
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionPage"
+
+  /alerts:
+    get:
+      operationId: getAlerts
+      tags: [alerts]
+      summary: Get recent balance change alerts
+      responses:
+        "200":
+          description: Alerts list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  /alerts/unread-count:
+    get:
+      operationId: getUnreadAlertCount
+      tags: [alerts]
+      summary: Get number of unread alerts
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+
+  /alerts/{id}/read:
+    patch:
+      operationId: markAlertRead
+      tags: [alerts]
+      summary: Mark an alert as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alert marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +155,143 @@ components:
       required:
         - status
 
+    Wallet:
+      type: object
+      required: [address, label, group, totalUsdValue]
+      properties:
+        address:
+          type: string
+        label:
+          type: string
+        group:
+          type: string
+          description: "deposit | reward-europe | reward-us | reward-asia"
+        totalUsdValue:
+          type: number
+        tokens:
+          type: array
+          items:
+            $ref: "#/components/schemas/TokenBalance"
+        lastUpdated:
+          type: string
+
+    TokenBalance:
+      type: object
+      required: [symbol, balance, usdValue, contractAddress]
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        balance:
+          type: string
+        usdValue:
+          type: number
+        contractAddress:
+          type: string
+        decimals:
+          type: integer
+        logoUrl:
+          type: ["string", "null"]
+
+    WalletSummary:
+      type: object
+      required: [totalUsdValue, walletCount, tokenBreakdown]
+      properties:
+        totalUsdValue:
+          type: number
+        walletCount:
+          type: integer
+        depositTotal:
+          type: number
+        rewardTotal:
+          type: number
+        tokenBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/TokenSummary"
+        lastUpdated:
+          type: string
+
+    TokenSummary:
+      type: object
+      required: [symbol, totalBalance, totalUsdValue]
+      properties:
+        symbol:
+          type: string
+        totalBalance:
+          type: string
+        totalUsdValue:
+          type: number
+
+    Transaction:
+      type: object
+      required: [hash, from, to, value, token, timestamp, type]
+      properties:
+        hash:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        value:
+          type: string
+        token:
+          type: string
+        usdValue:
+          type: ["number", "null"]
+        timestamp:
+          type: string
+        type:
+          type: string
+          description: "in | out"
+        blockNumber:
+          type: ["integer", "null"]
+
+    TransactionPage:
+      type: object
+      required: [transactions, total, page, limit]
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    Alert:
+      type: object
+      required: [id, walletAddress, walletLabel, token, changeType, oldValue, newValue, isRead, createdAt]
+      properties:
+        id:
+          type: integer
+        walletAddress:
+          type: string
+        walletLabel:
+          type: string
+        token:
+          type: string
+        changeType:
+          type: string
+          description: "increase | decrease"
+        oldValue:
+          type: string
+        newValue:
+          type: string
+        changePercent:
+          type: ["number", "null"]
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+
+    UnreadCount:
+      type: object
+      required: [count]
+      properties:
+        count:
+          type: integer
