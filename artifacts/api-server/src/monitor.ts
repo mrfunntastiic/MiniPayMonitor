@@ -248,28 +248,30 @@ async function runMonitorCycle() {
       }
     }
 
-    // --- Check Deposit Global balance for low balance alert ---
-    const depositState = await getState(DEPOSIT_WALLET.address);
-    const lastLowAlertAt = depositState?.lastLowBalanceAlertAt;
-    const cooldownPassed =
-      !lastLowAlertAt ||
-      Date.now() - new Date(lastLowAlertAt).getTime() > LOW_BALANCE_ALERT_COOLDOWN_MS;
+    // --- Check ALL wallets for low balance alert ---
+    for (const wallet of MONITORED_WALLETS) {
+      const walletState = await getState(wallet.address);
+      const lastLowAlertAt = walletState?.lastLowBalanceAlertAt;
+      const cooldownPassed =
+        !lastLowAlertAt ||
+        Date.now() - new Date(lastLowAlertAt).getTime() > LOW_BALANCE_ALERT_COOLDOWN_MS;
 
-    if (cooldownPassed) {
-      const totalUsd = await getDepositTotalUsd(DEPOSIT_WALLET.address);
-      logger.info({ totalUsd }, "Deposit wallet balance checked");
+      if (cooldownPassed) {
+        const totalUsd = await getDepositTotalUsd(wallet.address);
+        logger.info({ wallet: wallet.label, totalUsd }, "Wallet balance checked");
 
-      if (totalUsd < LOW_BALANCE_THRESHOLD_USD) {
-        await createAlert({
-          walletAddress: DEPOSIT_WALLET.address,
-          walletLabel: DEPOSIT_WALLET.label,
-          token: "USD",
-          changeType: "decrease",
-          oldValue: LOW_BALANCE_THRESHOLD_USD.toFixed(2),
-          newValue: totalUsd.toFixed(2),
-          changePercent: ((totalUsd - LOW_BALANCE_THRESHOLD_USD) / LOW_BALANCE_THRESHOLD_USD) * 100,
-        });
-        await updateLowBalanceAlertTime(DEPOSIT_WALLET.address);
+        if (totalUsd < LOW_BALANCE_THRESHOLD_USD) {
+          await createAlert({
+            walletAddress: wallet.address,
+            walletLabel: wallet.label,
+            token: "USD",
+            changeType: "decrease",
+            oldValue: LOW_BALANCE_THRESHOLD_USD.toFixed(2),
+            newValue: totalUsd.toFixed(2),
+            changePercent: ((totalUsd - LOW_BALANCE_THRESHOLD_USD) / LOW_BALANCE_THRESHOLD_USD) * 100,
+          });
+          await updateLowBalanceAlertTime(wallet.address);
+        }
       }
     }
   } catch (err) {
