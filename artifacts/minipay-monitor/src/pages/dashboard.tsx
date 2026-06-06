@@ -1,271 +1,140 @@
-import { useGetWallets, getGetWalletsQueryKey, useGetWalletsSummary, getGetWalletsSummaryQueryKey, useGetAlerts, getGetAlertsQueryKey } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { AddressLink } from "@/components/address-link";
-import { formatUsd, formatTokenAmount, timeAgo, formatPercent } from "@/lib/format";
-import { Link } from "wouter";
-import { ArrowUpRight, ArrowDownRight, Bell, Clock, Wallet as WalletIcon, RefreshCw, AlertTriangle } from "lucide-react";
+import { useGetWallets, getGetWalletsQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RefreshCw, ExternalLink } from "lucide-react";
+
+const DEPOSIT_ADDR = "0xCb205D7ca9840393f43941dDEAc6a7bF8deD4c5a";
+const REWARD_EU_US_ADDR = "0x65cc602e616ca786bdb4bab00a6272060f0082fb";
+const REWARD_ASIA_ADDR = "0x22Bc6F7f356F69EE8103475Aa1A864a0D77fC3e6";
+
+const CARDS = [
+  { id: "deposit-usdt",    label: "Deposit",      region: "Global",  token: "USDT", address: DEPOSIT_ADDR,      accent: "#22d3ee" },
+  { id: "deposit-usdc",    label: "Deposit",      region: "Global",  token: "USDC", address: DEPOSIT_ADDR,      accent: "#6366f1" },
+  { id: "reward-eu-usdt",  label: "Reward",       region: "Europe",  token: "USDT", address: REWARD_EU_US_ADDR, accent: "#34d399" },
+  { id: "reward-us-usdt",  label: "Reward",       region: "US",      token: "USDT", address: REWARD_EU_US_ADDR, accent: "#f59e0b" },
+  { id: "reward-asia-usdt",label: "Reward",       region: "Asia",    token: "USDT", address: REWARD_ASIA_ADDR,  accent: "#f472b6" },
+];
+
+function shortenAddr(addr: string) {
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function formatBalance(val: string | undefined): string {
+  if (!val || val === "0" || val === "0.0000") return "0.00";
+  const n = parseFloat(val);
+  if (isNaN(n)) return "0.00";
+  return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatUsd(val: number | undefined): string {
+  if (!val) return "$0.00";
+  return val.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+}
 
 export default function Dashboard() {
-  const { data: summary, isLoading: loadingSummary } = useGetWalletsSummary({
-    query: {
-      queryKey: getGetWalletsSummaryQueryKey(),
-      refetchInterval: 30000,
-    }
-  });
-
-  const { data: wallets, isLoading: loadingWallets } = useGetWallets({
+  const { data: wallets, isLoading, dataUpdatedAt } = useGetWallets({
     query: {
       queryKey: getGetWalletsQueryKey(),
       refetchInterval: 30000,
-    }
-  });
-  
-  const { data: alerts, isLoading: loadingAlerts } = useGetAlerts({
-    query: {
-      queryKey: getGetAlertsQueryKey(),
-      refetchInterval: 30000,
-    }
+    },
   });
 
-  const recentAlerts = alerts?.slice(0, 5) || [];
+  const lastUpdated = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : null;
+
+  function getTokenData(address: string, symbol: string) {
+    const wallet = wallets?.find((w) => w.address.toLowerCase() === address.toLowerCase());
+    const token = wallet?.tokens?.find((t) => t.symbol === symbol);
+    return { balance: token?.balance, usdValue: token?.usdValue };
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Global Monitor</h1>
-          <p className="text-muted-foreground text-sm flex items-center mt-1">
-            <RefreshCw className="h-3 w-3 mr-1" /> Auto-refreshing every 30s
-            {summary?.lastUpdated && (
-              <span className="ml-2 pl-2 border-l border-border">
-                Last updated: {timeAgo(summary.lastUpdated)}
-              </span>
-            )}
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Saldo Wallet</h1>
+          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+            <RefreshCw className="h-3 w-3" />
+            Auto-refresh setiap 30 detik
+            {lastUpdated && <span className="ml-1 opacity-60">· {lastUpdated}</span>}
           </p>
         </div>
-        
-        <div className="flex space-x-2">
-          {/* Action buttons could go here */}
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Value Managed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingSummary ? (
-              <Skeleton className="h-10 w-32" />
-            ) : (
-              <div className="text-3xl font-bold font-mono tracking-tight text-primary">
-                {formatUsd(summary?.totalUsdValue)}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-2">
-              Across {summary?.walletCount || 0} active wallets
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        {CARDS.map((card) => {
+          const { balance, usdValue } = getTokenData(card.address, card.token);
+          return (
+            <div
+              key={card.id}
+              data-testid={`card-${card.id}`}
+              className="group relative rounded-xl border border-border bg-card p-5 hover:border-[--accent] transition-all duration-200"
+              style={{ "--accent": card.accent } as React.CSSProperties}
+            >
+              {/* accent bar */}
+              <div
+                className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl"
+                style={{ background: card.accent }}
+              />
 
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Deposit Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingSummary ? (
-              <Skeleton className="h-10 w-32" />
-            ) : (
-              <div className="text-3xl font-bold font-mono tracking-tight text-foreground">
-                {formatUsd(summary?.depositTotal)}
+              {/* header */}
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                    {card.label}
+                  </p>
+                  <p className="text-sm font-semibold text-foreground mt-0.5">
+                    {card.region}
+                  </p>
+                </div>
+                <span
+                  className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: card.accent + "22", color: card.accent }}
+                  data-testid={`badge-${card.id}`}
+                >
+                  {card.token}
+                </span>
               </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-2">
-              Inbound user deposits globally
-            </p>
-          </CardContent>
-        </Card>
 
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Reward Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingSummary ? (
-              <Skeleton className="h-10 w-32" />
-            ) : (
-              <div className="text-3xl font-bold font-mono tracking-tight text-foreground">
-                {formatUsd(summary?.rewardTotal)}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-2">
-              Outbound rewards by region
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-4 border-b border-border">
-              <CardTitle>Wallets</CardTitle>
-              <CardDescription>Monitored deposit and reward wallets</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loadingWallets ? (
-                <div className="p-6 space-y-4">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+              {/* balance */}
+              {isLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-36" />
+                  <Skeleton className="h-4 w-20" />
                 </div>
               ) : (
-                <div className="divide-y divide-border">
-                  {wallets?.map(wallet => (
-                    <div key={wallet.address} className="p-4 hover:bg-secondary/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-start space-x-3">
-                        <div className={`p-2 rounded-full mt-0.5 ${wallet.group === 'deposit' ? 'bg-blue-500/10 text-blue-500' : 'bg-primary/10 text-primary'}`}>
-                          <WalletIcon className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <Link href={`/wallet/${wallet.address}`} className="font-semibold text-foreground hover:text-primary transition-colors flex items-center">
-                            {wallet.label}
-                            <ArrowUpRight className="h-3 w-3 ml-1 opacity-50" />
-                          </Link>
-                          <div className="flex items-center mt-1">
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground uppercase font-semibold tracking-wider mr-2">
-                              {wallet.group}
-                            </span>
-                            <AddressLink address={wallet.address} showCopy={true} />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
-                        <div className="text-lg font-mono font-bold text-foreground">
-                          {formatUsd(wallet.totalUsdValue)}
-                        </div>
-                        <div className="text-xs text-muted-foreground flex items-center mt-1">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {wallet.lastUpdated ? timeAgo(wallet.lastUpdated) : 'Never'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {wallets?.length === 0 && (
-                    <div className="p-8 text-center text-muted-foreground">
-                      No wallets configured.
-                    </div>
-                  )}
+                <div>
+                  <div
+                    className="text-3xl font-mono font-bold tracking-tight leading-none"
+                    style={{ color: card.accent }}
+                    data-testid={`balance-${card.id}`}
+                  >
+                    {formatBalance(balance)}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 font-mono">
+                    {card.token} · {formatUsd(usdValue)}
+                  </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-4 border-b border-border">
-              <CardTitle>Token Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-               {loadingSummary ? (
-                 <div className="p-6 space-y-4">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-                 </div>
-               ) : (
-                 <div className="divide-y divide-border">
-                   {summary?.tokenBreakdown?.map(token => (
-                     <div key={token.symbol} className="p-4 flex items-center justify-between">
-                       <div className="flex items-center space-x-3">
-                         <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs">
-                           {token.symbol.substring(0, 2)}
-                         </div>
-                         <div className="font-medium">{token.symbol}</div>
-                       </div>
-                       <div className="text-right">
-                         <div className="font-mono font-medium">{formatUsd(token.totalUsdValue)}</div>
-                         <div className="text-xs text-muted-foreground font-mono">
-                           {formatTokenAmount(token.totalBalance)} {token.symbol}
-                         </div>
-                       </div>
-                     </div>
-                   ))}
-                   {(!summary?.tokenBreakdown || summary.tokenBreakdown.length === 0) && (
-                     <div className="p-8 text-center text-muted-foreground">No token data available.</div>
-                   )}
-                 </div>
-               )}
-            </CardContent>
-          </Card>
-        </div>
 
-        <div className="space-y-6">
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-4 border-b border-border flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Recent Alerts</CardTitle>
-                <CardDescription>Balance anomalies</CardDescription>
+              {/* footer */}
+              <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  {shortenAddr(card.address)}
+                </span>
+                <a
+                  href={`https://celoscan.io/address/${card.address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  data-testid={`link-celoscan-${card.id}`}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
               </div>
-              <Link href="/alerts" className="text-sm font-medium text-primary hover:underline">
-                View All
-              </Link>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loadingAlerts ? (
-                <div className="p-4 space-y-4">
-                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {recentAlerts.map(alert => (
-                    <div key={alert.id} className={`p-4 ${!alert.isRead ? 'bg-primary/5 border-l-2 border-l-primary' : ''}`}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-2">
-                          {alert.changeType === 'increase' ? (
-                            <ArrowUpRight className="h-4 w-4 text-green-500 mt-0.5" />
-                          ) : (
-                            <ArrowDownRight className="h-4 w-4 text-destructive mt-0.5" />
-                          )}
-                          <div>
-                            <div className="text-sm font-medium">
-                              {alert.changeType === 'increase' ? 'Large Deposit' : 'Large Withdrawal'}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {alert.walletLabel}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className={`text-sm font-mono font-bold ${alert.changeType === 'increase' ? 'text-green-500' : 'text-destructive'}`}>
-                            {alert.changeType === 'increase' ? '+' : '-'}{alert.changePercent ? formatPercent(alert.changePercent) : ''}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            {timeAgo(alert.createdAt)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {recentAlerts.length === 0 && (
-                    <div className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                      <Bell className="h-8 w-8 mb-2 opacity-20" />
-                      <p>No recent alerts</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-card border-border overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-blue-500"></div>
-            <CardContent className="p-6 text-center">
-              <AlertTriangle className="h-8 w-8 mx-auto mb-3 text-yellow-500" />
-              <h3 className="font-bold mb-1">System Health</h3>
-              <p className="text-sm text-muted-foreground">All Celo RPC nodes and indexers are fully operational.</p>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
