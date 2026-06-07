@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { alertsTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
+import { sendTelegramMessage } from "../telegram";
 
 const router = Router();
 
@@ -80,6 +81,25 @@ router.patch("/alerts/:id/read", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Failed to mark alert read");
     res.status(500).json({ error: "Failed to update alert" });
+  }
+});
+
+// POST /api/alerts/test-telegram
+router.post("/alerts/test-telegram", async (req, res) => {
+  try {
+    const now = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
+    await sendTelegramMessage(
+      `🔔 <b>Test Notifikasi MiniPay Monitor</b>\n\n` +
+      `✅ Koneksi Telegram berhasil!\n` +
+      `🕐 Waktu: ${now} WIB\n\n` +
+      `Bot siap mengirim alert untuk:\n` +
+      `• 🟢 Transfer masuk ≥ $1,000\n` +
+      `• 🔴 Saldo wallet < $1,000`
+    );
+    res.json({ ok: true, message: "Test notification sent to Telegram" });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send test Telegram notification");
+    res.status(500).json({ error: "Failed to send test notification" });
   }
 });
 

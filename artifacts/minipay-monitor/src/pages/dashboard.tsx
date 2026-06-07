@@ -5,7 +5,8 @@ import {
   getGetDepositWalletQueryKey,
 } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, ExternalLink, Zap } from "lucide-react";
+import { RefreshCw, ExternalLink, Zap, Send, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 const DEPOSIT_ADDR = "0xCb205D7ca9840393f43941dDEAc6a7bF8deD4c5a";
 const REWARD_EU_ADDR = "0x65cc602e616ca786bdb4bab00a6272060f0082fb";
@@ -153,6 +154,20 @@ function WalletCard({
 }
 
 export default function Dashboard() {
+  const [testStatus, setTestStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+
+  async function handleTestTelegram() {
+    setTestStatus("loading");
+    try {
+      const res = await fetch("/api/alerts/test-telegram", { method: "POST" });
+      setTestStatus(res.ok ? "ok" : "error");
+    } catch {
+      setTestStatus("error");
+    } finally {
+      setTimeout(() => setTestStatus("idle"), 4000);
+    }
+  }
+
   // Fast refresh for deposit wallet (every 5s)
   const { data: depositWallet, isLoading: depositLoading, dataUpdatedAt: depositUpdatedAt } = useGetDepositWallet({
     query: {
@@ -187,19 +202,39 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
-          <p className="text-xs flex items-center gap-1.5" style={{ color: "hsl(220 12% 50%)" }}>
-            <Zap className="h-3 w-3" style={{ color: "#06b6d4" }} />
-            <span style={{ color: "#06b6d4" }}>Deposit</span> refresh 5 detik
-            {depositLastUpdated && <span className="opacity-60">· {depositLastUpdated}</span>}
-          </p>
-          <p className="text-xs flex items-center gap-1.5" style={{ color: "hsl(220 12% 50%)" }}>
-            <RefreshCw className="h-3 w-3" />
-            Reward refresh 30 detik
-          </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
+            <p className="text-xs flex items-center gap-1.5" style={{ color: "hsl(220 12% 50%)" }}>
+              <Zap className="h-3 w-3" style={{ color: "#06b6d4" }} />
+              <span style={{ color: "#06b6d4" }}>Deposit</span> refresh 5 detik
+              {depositLastUpdated && <span className="opacity-60">· {depositLastUpdated}</span>}
+            </p>
+            <p className="text-xs flex items-center gap-1.5" style={{ color: "hsl(220 12% 50%)" }}>
+              <RefreshCw className="h-3 w-3" />
+              Reward refresh 30 detik
+            </p>
+          </div>
         </div>
+
+        {/* Telegram test button */}
+        <button
+          onClick={handleTestTelegram}
+          disabled={testStatus === "loading"}
+          className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg border transition-all duration-200 disabled:opacity-60"
+          style={{
+            background: testStatus === "ok" ? "#16a34a22" : testStatus === "error" ? "#dc262622" : "#0ea5e922",
+            borderColor: testStatus === "ok" ? "#16a34a66" : testStatus === "error" ? "#dc262666" : "#0ea5e966",
+            color: testStatus === "ok" ? "#4ade80" : testStatus === "error" ? "#f87171" : "#38bdf8",
+          }}
+        >
+          {testStatus === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          {testStatus === "ok" && <CheckCircle className="h-3.5 w-3.5" />}
+          {testStatus === "error" && <XCircle className="h-3.5 w-3.5" />}
+          {testStatus === "idle" && <Send className="h-3.5 w-3.5" />}
+          {testStatus === "loading" ? "Mengirim..." : testStatus === "ok" ? "Terkirim!" : testStatus === "error" ? "Gagal!" : "Test Telegram"}
+        </button>
       </div>
 
       {SECTIONS.map((section) => {
