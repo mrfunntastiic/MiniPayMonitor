@@ -1,0 +1,104 @@
+root@VM-0-9-ubuntu:~/minipay-monitor# cd minipay-monitor
+git pull origin main
+bash deploy.sh
+-bash: cd: minipay-monitor: No such file or directory
+remote: Enumerating objects: 10, done.
+remote: Counting objects: 100% (10/10), done.
+remote: Compressing objects: 100% (1/1), done.
+remote: Total 6 (delta 4), reused 6 (delta 4), pack-reused 0 (from 0)
+Unpacking objects: 100% (6/6), 920 bytes | 920.00 KiB/s, done.
+From https://github.com/mrfunntastiic/MiniPayMonitor
+ * branch            main       -> FETCH_HEAD
+   82cd276..bd39ac6  main       -> origin/main
+Updating 82cd276..bd39ac6
+Fast-forward
+ .dockerignore       |  5 +++++
+ Dockerfile.api      | 11 ++++-------
+ Dockerfile.frontend |  6 +-----
+ Dockerfile.migrate  |  4 +---
+ 4 files changed, 11 insertions(+), 15 deletions(-)
+ create mode 100644 .dockerignore
+=== MiniPay Monitor Deploy ===
+[1/4] Pull latest code...
+From https://github.com/mrfunntastiic/MiniPayMonitor
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+[2/4] Build Docker images...
+[+] Building 18.7s (19/25)
+ => [internal] load local bake definitions                                                                         0.0s
+ => => reading from stdin 1.45kB                                                                                   0.0s
+ => [migrate internal] load build definition from Dockerfile.migrate                                               0.0s
+ => => transferring dockerfile: 221B                                                                               0.0s
+ => [frontend internal] load build definition from Dockerfile.frontend                                             0.0s
+ => => transferring dockerfile: 488B                                                                               0.0s
+ => [api internal] load build definition from Dockerfile.api                                                       0.0s
+ => => transferring dockerfile: 778B                                                                               0.0s
+ => [frontend internal] load metadata for docker.io/library/nginx:alpine                                           0.8s
+ => [frontend internal] load metadata for docker.io/library/node:24-slim                                           0.8s
+ => [frontend internal] load .dockerignore                                                                         0.0s
+ => => transferring context: 86B                                                                                   0.0s
+ => CACHED [migrate 1/5] FROM docker.io/library/node:24-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e  0.1s
+ => => resolve docker.io/library/node:24-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b7  0.1s
+ => [api internal] load build context                                                                              0.1s
+ => => transferring context: 591.59kB                                                                              0.0s
+ => CACHED [frontend runner 1/3] FROM docker.io/library/nginx:alpine@sha256:8b1e78743a03dbb2c95171cc58639fef29abc  0.1s
+ => => resolve docker.io/library/nginx:alpine@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e  0.1s
+ => [migrate 2/5] RUN npm install -g pnpm@latest                                                                   2.5s
+ => [api 3/5] WORKDIR /app                                                                                         0.1s
+ => [api 4/5] COPY . .                                                                                             0.2s
+ => [api runner 4/9] COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./                                       0.1s
+ => [api runner 5/9] COPY lib/ ./lib/                                                                              0.1s
+ => ERROR [migrate 5/5] RUN pnpm install --frozen-lockfile                                                        14.7s
+ => [api runner 6/9] COPY artifacts/api-server/package.json ./artifacts/api-server/                                0.1s
+ => [api runner 7/9] COPY scripts/package.json ./scripts/                                                          0.1s
+ => [api runner 8/9] RUN pnpm install --frozen-lockfile --prod --filter @workspace/api-server...                   8.3s
+------
+ > [migrate 5/5] RUN pnpm install --frozen-lockfile:
+1.034 Scope: all 9 workspace projects
+1.424 ? Verifying lockfile against supply-chain policies (500 entries)...
+6.842 ✓ Lockfile passes supply-chain policies (500 entries in 5.4s)
+6.882 Lockfile is up to date, resolution step is skipped
+6.950 Progress: resolved 1, reused 0, downloaded 0, added 0
+7.006 Packages: +498
+7.006 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+7.952 Progress: resolved 498, reused 0, downloaded 44, added 12
+8.953 Progress: resolved 498, reused 0, downloaded 244, added 221
+9.954 Progress: resolved 498, reused 0, downloaded 299, added 260
+10.95 Progress: resolved 498, reused 0, downloaded 366, added 303
+11.95 Progress: resolved 498, reused 0, downloaded 468, added 460
+12.96 Progress: resolved 498, reused 0, downloaded 495, added 495
+13.74 Progress: resolved 498, reused 0, downloaded 498, added 498, done
+14.07
+14.07 devDependencies:
+14.07 + prettier 3.8.3
+14.07 + typescript 5.9.3
+14.07
+14.10 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+14.13 . preinstall: Done
+14.34 [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: esbuild@0.27.3
+14.34
+14.34 Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+------
+[+] build 0/3
+ ⠙ Image minipay-monitor-migrate  Building                                                                         18.8s
+ ⠙ Image minipay-monitor-api      Building                                                                         18.8s
+ ⠙ Image minipay-monitor-frontend Building                                                                         18.8s
+Dockerfile.frontend:9
+
+--------------------
+
+   7 |     COPY . .
+
+   8 |
+
+   9 | >>> RUN pnpm install --frozen-lockfile
+
+  10 |
+
+  11 |     RUN pnpm run typecheck:libs
+
+--------------------
+
+target frontend: failed to solve: process "/bin/sh -c pnpm install --frozen-lockfile" did not complete successfully: exit code: 1
+
+root@VM-0-9-ubuntu:~/minipay-monitor#
