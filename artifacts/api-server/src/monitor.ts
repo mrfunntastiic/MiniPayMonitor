@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { alertsTable, monitorStateTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "./lib/logger";
+import { sendTelegramMessage, buildLargeIncomingMessage, buildLowBalanceMessage } from "./telegram";
 
 const CELOSCAN_API = "https://api.celoscan.io/api";
 const POLL_INTERVAL_MS = 60_000; // 1 minute
@@ -245,6 +246,17 @@ async function runMonitorCycle() {
             oldValue: "0.0000",
             newValue: tx.value.toFixed(4),
           });
+          await sendTelegramMessage(
+            buildLargeIncomingMessage({
+              walletLabel: wallet.label,
+              walletAddress: wallet.address,
+              token: tx.token,
+              amount: tx.value.toFixed(4),
+              usdValue: tx.usdValue,
+              txHash: tx.hash,
+              timestamp: tx.timestamp,
+            })
+          );
         }
       }
     }
@@ -271,6 +283,14 @@ async function runMonitorCycle() {
             newValue: totalUsd.toFixed(2),
             changePercent: ((totalUsd - LOW_BALANCE_THRESHOLD_USD) / LOW_BALANCE_THRESHOLD_USD) * 100,
           });
+          await sendTelegramMessage(
+            buildLowBalanceMessage({
+              walletLabel: wallet.label,
+              walletAddress: wallet.address,
+              currentUsd: totalUsd,
+              thresholdUsd: LOW_BALANCE_THRESHOLD_USD,
+            })
+          );
           await updateLowBalanceAlertTime(wallet.address);
         }
       }
