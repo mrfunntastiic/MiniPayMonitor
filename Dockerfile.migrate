@@ -1,0 +1,13 @@
+FROM node:24-slim
+
+RUN npm install -g pnpm@latest
+
+WORKDIR /app
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY lib/ ./lib/
+COPY scripts/ ./scripts/
+
+RUN pnpm install --frozen-lockfile
+
+CMD ["pnpm", "--filter", "@workspace/db", "run", "push-force"]
