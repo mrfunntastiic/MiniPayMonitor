@@ -4,6 +4,13 @@ import { logger } from "./lib/logger";
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHANNEL_ID = "@minipaymonitor";
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export async function sendTelegramMessage(text: string): Promise<void> {
   if (!BOT_TOKEN) {
     logger.warn("TELEGRAM_BOT_TOKEN not set, skipping Telegram notification");
@@ -49,11 +56,11 @@ export function buildLargeIncomingMessage(data: {
   const shortHash = `${data.txHash.slice(0, 10)}...`;
   return (
     `🟢 <b>Incoming Transfer Besar</b>\n\n` +
-    `💼 Wallet: <b>${data.walletLabel}</b> (<code>${shortAddr}</code>)\n` +
-    `💰 Token: <b>${data.amount} ${data.token}</b>\n` +
-    `💵 Nilai: <b>~$${usd}</b>\n` +
-    `🔗 Tx: <code>${shortHash}</code>\n` +
-    `🕐 Waktu: ${new Date(data.timestamp).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB`
+    `💼 Wallet: <b>${escapeHtml(data.walletLabel)}</b> (<code>${escapeHtml(shortAddr)}</code>)\n` +
+    `💰 Token: <b>${escapeHtml(data.amount)} ${escapeHtml(data.token)}</b>\n` +
+    `💵 Nilai: <b>~$${escapeHtml(usd)}</b>\n` +
+    `🔗 Tx: <code>${escapeHtml(shortHash)}</code>\n` +
+    `🕐 Waktu: ${escapeHtml(new Date(data.timestamp).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }))} WIB`
   );
 }
 
@@ -68,9 +75,9 @@ export function buildLowBalanceMessage(data: {
   const shortAddr = `${data.walletAddress.slice(0, 6)}...${data.walletAddress.slice(-4)}`;
   return (
     `🔴 <b>Saldo Rendah!</b>\n\n` +
-    `💼 Wallet: <b>${data.walletLabel}</b> (<code>${shortAddr}</code>)\n` +
-    `💵 Saldo: <b>$${current}</b>\n` +
-    `⚠️ Threshold: <b>$${threshold}</b>\n` +
+    `💼 Wallet: <b>${escapeHtml(data.walletLabel)}</b> (<code>${escapeHtml(shortAddr)}</code>)\n` +
+    `💵 Saldo: <b>$${escapeHtml(current)}</b>\n` +
+    `⚠️ Threshold: <b>$${escapeHtml(threshold)}</b>\n` +
     `📉 Saldo di bawah batas minimum — segera top up!`
   );
 }

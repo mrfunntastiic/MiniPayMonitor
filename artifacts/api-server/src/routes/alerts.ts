@@ -93,8 +93,8 @@ router.post("/alerts/test-telegram", async (req, res) => {
       `✅ Koneksi Telegram berhasil!\n` +
       `🕐 Waktu: ${now} WIB\n\n` +
       `Bot siap mengirim alert untuk:\n` +
-      `• 🟢 Transfer masuk ≥ $1,000\n` +
-      `• 🔴 Saldo wallet < $1,000`
+      `• 🟢 Transfer masuk &gt;= $1,000\n` +
+      `• 🔴 Saldo wallet &lt; $1,000`
     );
     res.json({ ok: true, message: "Test notification sent to Telegram" });
   } catch (err: unknown) {
