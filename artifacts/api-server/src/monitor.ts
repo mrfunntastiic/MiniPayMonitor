@@ -256,7 +256,7 @@ async function runMonitorCycle() {
               txHash: tx.hash,
               timestamp: tx.timestamp,
             })
-          );
+          ).catch((err) => logger.error({ err }, "Telegram notify failed (large tx)"));
         }
       }
     }
@@ -290,7 +290,7 @@ async function runMonitorCycle() {
               currentUsd: totalUsd,
               thresholdUsd: LOW_BALANCE_THRESHOLD_USD,
             })
-          );
+          ).catch((err) => logger.error({ err }, "Telegram notify failed (low balance)"));
           await updateLowBalanceAlertTime(wallet.address);
         }
       }

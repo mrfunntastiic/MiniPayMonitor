@@ -97,9 +97,10 @@ router.post("/alerts/test-telegram", async (req, res) => {
       `• 🔴 Saldo wallet < $1,000`
     );
     res.json({ ok: true, message: "Test notification sent to Telegram" });
-  } catch (err) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to send test notification";
     req.log.error({ err }, "Failed to send test Telegram notification");
-    res.status(500).json({ error: "Failed to send test notification" });
+    res.status(500).json({ error: message });
   }
 });
 

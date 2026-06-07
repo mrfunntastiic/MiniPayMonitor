@@ -21,8 +21,17 @@ export async function sendTelegramMessage(text: string): Promise<void> {
       { timeout: 10000 }
     );
     logger.info({ channel: CHANNEL_ID }, "Telegram notification sent");
-  } catch (err) {
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response) {
+      const tgError = err.response.data as { description?: string };
+      logger.error(
+        { status: err.response.status, telegram_error: tgError.description },
+        "Telegram API rejected the message"
+      );
+      throw new Error(`Telegram error ${err.response.status}: ${tgError.description ?? "unknown"}`);
+    }
     logger.error({ err }, "Failed to send Telegram notification");
+    throw err;
   }
 }
 
