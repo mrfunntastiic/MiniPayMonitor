@@ -14,8 +14,13 @@ const MONITORED_WALLETS = [
   },
   {
     address: "0x65cc602e616ca786bdb4bab00a6272060f0082fb",
-    label: "Reward Europe / US",
+    label: "Reward Europe",
     group: "reward-europe",
+  },
+  {
+    address: "0x74667d9eDD871150cE38EBC26355758ba31F44B5",
+    label: "Reward US",
+    group: "reward-us",
   },
   {
     address: "0x22Bc6F7f356F69EE8103475Aa1A864a0D77fC3e6",
@@ -23,6 +28,12 @@ const MONITORED_WALLETS = [
     group: "reward-asia",
   },
 ];
+
+const DEPOSIT_ADDRESS = "0xCb205D7ca9840393f43941dDEAc6a7bF8deD4c5a";
+
+// Fast cache for deposit wallet — max age 4 seconds
+let depositCache: { data: object; ts: number } | null = null;
+const DEPOSIT_CACHE_TTL = 4_000;
 
 const TOKEN_CONTRACTS: Record<string, { symbol: string; name: string; decimals: number; logoUrl: string | null }> = {
   "0xceba9300f2b948710d2653dd7b07f33a8b32118c": {
@@ -220,6 +231,32 @@ router.get("/wallets", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Failed to get wallets");
     res.status(500).json({ error: "Failed to fetch wallet data" });
+  }
+});
+
+// GET /api/wallets/deposit  — fast-refresh endpoint with 4s server-side cache
+router.get("/wallets/deposit", async (req, res) => {
+  try {
+    const now = Date.now();
+    if (depositCache && now - depositCache.ts < DEPOSIT_CACHE_TTL) {
+      res.json(depositCache.data);
+      return;
+    }
+    const tokens = await getWalletTokenBalances(DEPOSIT_ADDRESS);
+    const totalUsdValue = tokens.reduce((acc, t) => acc + t.usdValue, 0);
+    const result = {
+      address: DEPOSIT_ADDRESS,
+      label: "Deposit Global",
+      group: "deposit",
+      totalUsdValue,
+      tokens,
+      lastUpdated: new Date().toISOString(),
+    };
+    depositCache = { data: result, ts: now };
+    res.json(result);
+  } catch (err) {
+    req.log.error({ err }, "Failed to get deposit wallet");
+    res.status(500).json({ error: "Failed to fetch deposit wallet data" });
   }
 });
 

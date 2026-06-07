@@ -39,6 +39,27 @@ export const GetWalletsResponse = zod.array(GetWalletsResponseItem)
 
 
 /**
+ * @summary Get deposit wallet balance with fast refresh (cached 4s)
+ */
+export const GetDepositWalletResponse = zod.object({
+  "address": zod.string(),
+  "label": zod.string(),
+  "group": zod.string().describe('deposit | reward-europe | reward-us | reward-asia'),
+  "totalUsdValue": zod.number(),
+  "tokens": zod.array(zod.object({
+  "symbol": zod.string(),
+  "name": zod.string().optional(),
+  "balance": zod.string(),
+  "usdValue": zod.number(),
+  "contractAddress": zod.string(),
+  "decimals": zod.number().optional(),
+  "logoUrl": zod.string().nullish()
+})).optional(),
+  "lastUpdated": zod.string().optional()
+})
+
+
+/**
  * @summary Summary of all wallet balances grouped by type
  */
 export const GetWalletsSummaryResponse = zod.object({

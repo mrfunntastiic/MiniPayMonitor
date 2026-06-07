@@ -195,6 +195,83 @@ export function useGetWallets<TData = Awaited<ReturnType<typeof getWallets>>, TE
 
 
 
+export const getGetDepositWalletUrl = () => {
+
+
+
+
+  return `/api/wallets/deposit`
+}
+
+/**
+ * @summary Get deposit wallet balance with fast refresh (cached 4s)
+ */
+export const getDepositWallet = async ( options?: RequestInit): Promise<Wallet> => {
+
+  return customFetch<Wallet>(getGetDepositWalletUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDepositWalletQueryKey = () => {
+    return [
+    `/api/wallets/deposit`
+    ] as const;
+    }
+
+
+export const getGetDepositWalletQueryOptions = <TData = Awaited<ReturnType<typeof getDepositWallet>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDepositWallet>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDepositWalletQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDepositWallet>>> = ({ signal }) => getDepositWallet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDepositWallet>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDepositWalletQueryResult = NonNullable<Awaited<ReturnType<typeof getDepositWallet>>>
+export type GetDepositWalletQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get deposit wallet balance with fast refresh (cached 4s)
+ */
+
+export function useGetDepositWallet<TData = Awaited<ReturnType<typeof getDepositWallet>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDepositWallet>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDepositWalletQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
 export const getGetWalletsSummaryUrl = () => {
 
 

@@ -45,6 +45,19 @@ paths:
                 items:
                   $ref: "#/components/schemas/Wallet"
 
+  /wallets/deposit:
+    get:
+      operationId: getDepositWallet
+      tags: [wallets]
+      summary: Get deposit wallet balance with fast refresh (cached 4s)
+      responses:
+        "200":
+          description: Deposit wallet with token balances
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wallet"
+
   /wallets/summary:
     get:
       operationId: getWalletsSummary

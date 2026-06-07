@@ -1,6 +1,11 @@
-import { useGetWallets, getGetWalletsQueryKey } from "@workspace/api-client-react";
+import {
+  useGetWallets,
+  getGetWalletsQueryKey,
+  useGetDepositWallet,
+  getGetDepositWalletQueryKey,
+} from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, ExternalLink } from "lucide-react";
+import { RefreshCw, ExternalLink, Zap } from "lucide-react";
 
 const DEPOSIT_ADDR = "0xCb205D7ca9840393f43941dDEAc6a7bF8deD4c5a";
 const REWARD_EU_ADDR = "0x65cc602e616ca786bdb4bab00a6272060f0082fb";
@@ -148,19 +153,33 @@ function WalletCard({
 }
 
 export default function Dashboard() {
-  const { data: wallets, isLoading, dataUpdatedAt } = useGetWallets({
+  // Fast refresh for deposit wallet (every 5s)
+  const { data: depositWallet, isLoading: depositLoading, dataUpdatedAt: depositUpdatedAt } = useGetDepositWallet({
+    query: {
+      queryKey: getGetDepositWalletQueryKey(),
+      refetchInterval: 5000,
+    },
+  });
+
+  // Normal refresh for reward wallets (every 30s)
+  const { data: allWallets, isLoading: walletsLoading } = useGetWallets({
     query: {
       queryKey: getGetWalletsQueryKey(),
       refetchInterval: 30000,
     },
   });
 
-  const lastUpdated = dataUpdatedAt
-    ? new Date(dataUpdatedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+  const depositLastUpdated = depositUpdatedAt
+    ? new Date(depositUpdatedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
     : null;
 
-  function getTokenData(address: string, symbol: string) {
-    const wallet = wallets?.find((w) => w.address.toLowerCase() === address.toLowerCase());
+  function getDepositTokenData(symbol: string) {
+    const token = depositWallet?.tokens?.find((t) => t.symbol === symbol);
+    return { balance: token?.balance, usdValue: token?.usdValue };
+  }
+
+  function getRewardTokenData(address: string, symbol: string) {
+    const wallet = allWallets?.find((w) => w.address.toLowerCase() === address.toLowerCase());
     const token = wallet?.tokens?.find((t) => t.symbol === symbol);
     return { balance: token?.balance, usdValue: token?.usdValue };
   }
@@ -170,48 +189,59 @@ export default function Dashboard() {
       {/* header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
-        <p className="text-xs mt-1.5 flex items-center gap-1.5" style={{ color: "hsl(220 12% 50%)" }}>
-          <RefreshCw className="h-3 w-3" />
-          Auto-refresh setiap 30 detik
-          {lastUpdated && <span className="opacity-60">· {lastUpdated}</span>}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
+          <p className="text-xs flex items-center gap-1.5" style={{ color: "hsl(220 12% 50%)" }}>
+            <Zap className="h-3 w-3" style={{ color: "#06b6d4" }} />
+            <span style={{ color: "#06b6d4" }}>Deposit</span> refresh 5 detik
+            {depositLastUpdated && <span className="opacity-60">· {depositLastUpdated}</span>}
+          </p>
+          <p className="text-xs flex items-center gap-1.5" style={{ color: "hsl(220 12% 50%)" }}>
+            <RefreshCw className="h-3 w-3" />
+            Reward refresh 30 detik
+          </p>
+        </div>
       </div>
 
-      {SECTIONS.map((section) => (
-        <div key={section.title} className="space-y-4">
-          {/* section label */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px" style={{ background: "hsl(230 20% 18%)" }} />
-            <span
-              className="text-[11px] font-bold tracking-widest px-3 py-1 rounded-full border"
-              style={{
-                color: "hsl(180 80% 55%)",
-                borderColor: "hsl(180 80% 50% / 0.3)",
-                background: "hsl(180 80% 50% / 0.08)",
-              }}
-            >
-              {section.title}
-            </span>
-            <div className="flex-1 h-px" style={{ background: "hsl(230 20% 18%)" }} />
-          </div>
+      {SECTIONS.map((section) => {
+        const isDeposit = section.title === "WALLET DEPOSIT";
+        return (
+          <div key={section.title} className="space-y-4">
+            {/* section label */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px" style={{ background: "hsl(230 20% 18%)" }} />
+              <span
+                className="text-[11px] font-bold tracking-widest px-3 py-1 rounded-full border"
+                style={{
+                  color: "hsl(180 80% 55%)",
+                  borderColor: "hsl(180 80% 50% / 0.3)",
+                  background: "hsl(180 80% 50% / 0.08)",
+                }}
+              >
+                {section.title}
+              </span>
+              <div className="flex-1 h-px" style={{ background: "hsl(230 20% 18%)" }} />
+            </div>
 
-          {/* cards grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {section.cards.map((card) => {
-              const { balance, usdValue } = getTokenData(card.address, card.token);
-              return (
-                <WalletCard
-                  key={card.id}
-                  card={card}
-                  balance={balance}
-                  usdValue={usdValue}
-                  isLoading={isLoading}
-                />
-              );
-            })}
+            {/* cards grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {section.cards.map((card) => {
+                const { balance, usdValue } = isDeposit
+                  ? getDepositTokenData(card.token)
+                  : getRewardTokenData(card.address, card.token);
+                return (
+                  <WalletCard
+                    key={card.id}
+                    card={card}
+                    balance={balance}
+                    usdValue={usdValue}
+                    isLoading={isDeposit ? depositLoading : walletsLoading}
+                  />
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
