@@ -4,9 +4,7 @@ RUN npm install -g pnpm@latest
 
 WORKDIR /app
 
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY lib/ ./lib/
-COPY scripts/ ./scripts/
+COPY . .
 
 RUN pnpm install --frozen-lockfile
 

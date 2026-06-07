@@ -4,11 +4,7 @@ RUN npm install -g pnpm@latest
 
 WORKDIR /app
 
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY lib/ ./lib/
-COPY artifacts/minipay-monitor/ ./artifacts/minipay-monitor/
-COPY artifacts/api-server/ ./artifacts/api-server/
-COPY scripts/ ./scripts/
+COPY . .
 
 RUN pnpm install --frozen-lockfile
 
